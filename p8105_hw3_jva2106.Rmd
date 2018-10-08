@@ -23,6 +23,51 @@ brfss_smart_df = brfss_smart2010 %>%
   select(-(class:question), -sample_size, -(confidence_limit_low:geo_location)) %>% 
   mutate(response = forcats::fct_relevel(response, c("Excellent", "Very good", "Good", "Fair", "Poor"))) 
  
+brfss_smart_df %>% 
+  filter(year == 2002) %>% 
+  group_by(locationdesc) %>% 
+  summarise(n = n())
+ 
+brfss_smart_df %>% 
+  group_by(locationabbr, year) %>% 
+  summarise(n = n()) %>% 
+  ggplot(aes(x = year, y = n, color = locationabbr)) +
+  geom_line() +
+  theme(legend.position = "left") +
+  labs(
+    title = "Spaghetti plot",
+    x = "Year",
+    y = "Number of observed locations",
+    caption = "BRFSS data - 2010"
+  )
+
+brfss_smart_df %>% 
+  filter(year %in% c(2002, 2006, 2010) & locationabbr == "NY") %>% 
+  spread(key = response, value = data_value) %>% 
+  janitor::clean_names() %>% 
+  group_by(locationabbr, year) %>% 
+  summarise(n = n(),
+            mean = mean(excellent),
+            sd = sd(excellent)) %>% 
+  knitr::kable()
+ 
+
+brfss_smart_df %>% 
+  spread(key = response, value = data_value) %>% 
+  janitor::clean_names() %>% 
+  group_by(locationabbr, year) %>% 
+  summarise(n = n(),
+            mean_excellent = mean(excellent, na.rm = TRUE),
+            mean_very_good = mean(very_good, na.rm = TRUE),
+            mean_good = mean(good, na.rm = TRUE),
+            mean_fair = mean(fair, na.rm = TRUE),
+            mean_poor = mean(poor, na.rm = TRUE)) %>%
+  gather(key = mean_name, value = mean_value, mean_excellent:mean_poor) %>% 
+  ggplot(aes(x = year, y = mean_value, color = locationabbr)) +
+  geom_line() +
+  facet_grid(~mean_name)
+  
 ```
+
 
 
