@@ -1,0 +1,28 @@
+---
+title: "Homework 3"
+author: "Jyoti Ankam"
+date: "October 7, 2018"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Loading the tidyverse dataset and formatting the data to use appropriate variable names with a focus on the “Overall Health” topic and including only responses from “Excellent” to “Poor” while organizing responses as a factor taking levels from “Excellent” to “Poor”:
+
+```{r}
+library(tidyverse)
+
+library(p8105.datasets)
+
+data("brfss_smart2010")
+brfss_smart_df = brfss_smart2010 %>% 
+  janitor::clean_names() %>% 
+  filter(topic == "Overall Health") %>% 
+  select(-(class:question), -sample_size, -(confidence_limit_low:geo_location)) %>% 
+  mutate(response = forcats::fct_relevel(response, c("Excellent", "Very good", "Good", "Fair", "Poor"))) 
+ 
+```
+
+
