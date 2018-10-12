@@ -11,20 +11,26 @@ knitr::opts_chunk$set(
   fig.asp = .6,
   out.width = "90%"
 )
-
-theme_set(theme_bw() + theme(legend.position = "bottom"))
 ```
 
-
-Loading the tidyverse dataset and formatting the data to use appropriate variable names with a focus on the “Overall Health” topic and including only responses from “Excellent” to “Poor” while organizing responses as a factor taking levels from “Excellent” to “Poor”:
+Loading the tidyverse dataset and other relevant datasets-
 
 ```{r}
 library(tidyverse)
 
 library(p8105.datasets)
 
+library(ggthemes)
+
 library(patchwork)
 
+library(hexbin)
+  
+```
+
+Formatting the data to use appropriate variable names with a focus on the “Overall Health” topic and including only responses from “Excellent” to “Poor” while organizing responses as a factor taking levels from “Excellent” to “Poor”:
+
+```{r}
 data("brfss_smart2010")
 brfss_smart_df = brfss_smart2010 %>% 
   janitor::clean_names() %>% 
@@ -32,6 +38,11 @@ brfss_smart_df = brfss_smart2010 %>%
   select(-(class:question), -sample_size, -(confidence_limit_low:geo_location)) %>% 
   mutate(response = forcats::fct_relevel(response, c("Excellent", "Very good", "Good", "Fair", "Poor"))) 
  
+```
+
+States that were observed at 7 locations are -
+
+```{r}
 brfss_smart_df %>% 
   filter(year == 2002) %>% 
   group_by(locationdesc) %>%
@@ -39,7 +50,12 @@ brfss_smart_df %>%
   summarise(n = n()) %>% 
   filter(n == 7) %>% 
   knitr::kable()
- 
+
+```
+
+The states that were observed at 7 locations in 2002 are NC, CT and FL
+
+```{r}
 brfss_smart_df %>%
   distinct(locationabbr, locationdesc, year) %>% 
   group_by(locationabbr, year) %>% 
@@ -53,7 +69,13 @@ brfss_smart_df %>%
     y = "Number of observed locations",
     caption = "BRFSS data - Year 2010"
   )
+```
 
+Making a “spaghetti plot” showing the number of locations in each state from 2002 to 2010. As we can see there was a sudden increase in the number of locations for one of the states. The number of locations for majority of the other states, however, remained stable.
+
+Making a table showing the mean and standard deviation of the proportion of “Excellent” responses across locations in NY State for the years 2002, 2006, and 2010.
+
+```{r}
 brfss_smart_df %>% 
   filter(year %in% c(2002, 2006, 2010) & locationabbr == "NY") %>% 
   spread(key = response, value = data_value) %>% 
@@ -64,7 +86,13 @@ brfss_smart_df %>%
             sd = sd(excellent)) %>% 
   knitr::kable()
  
+```
 
+From the table, we can observe that the mean for proportion of excellent for the years 2006 and 2010 are very similar but worse than 2002. The standard deviation are not very different for 2002 and 2006.
+
+In order to make the five panel plot showing the each of the response categories separately, we can first compute the average proportion in each response category for each year and state and then we can compute by taking the average across locations in a state. This way we can see the distribution of these state-level averages over time.
+
+```{r}
 brfss_smart_df %>% 
   spread(key = response, value = data_value) %>% 
   janitor::clean_names() %>% 
@@ -79,18 +107,22 @@ brfss_smart_df %>%
   ggplot(aes(x = year, y = mean_value, color = locationabbr)) +
   geom_line() +
   facet_grid(~mean_name)
-  
 ```
+In this spagetti plot, we can observe that across the years, the proportion of very good has the highest mean while the lowest mean is for the proportion of the poor.
 
 Problem 2:
 
-Loading the dataset instacart:
+Loading the dataset "instacart":
 
 ```{r}
 
 data("instacart")
 
 ```
+
+Describing the dataset:
+
+This dataset contains `r nrow(instacart)` observations and `r ncol(instacart)` variables. Variable 'order_id' is a unique identifier of the orders that have been made. Also, we can observer that there are`r nrow(distinct(instacart, order_id))` distinct orders. Other variables like 'aisle', 'product_name', and 'department_name', have their own unique identifiers as well. Variables such as 'order_dow' tell us about the day of the week the order was made and 'order_hour_of_day' tell us the time the order was made. In addition, we can derive information from the `r nrow(distinct(instacard, user_id))` unique customers.
 
 Calculating the number of aisles, and also which aisles are the ones with the most items ordered from:
 
@@ -106,10 +138,12 @@ instacart %>%
   ungroup() %>% 
   top_n(5, number) %>% 
   arrange(desc(number))
+  knitr::kable()
 
 ```
+Here, we can see that there are `r pull(count(distinct(instacart, aisle_id)))` aisles. Also, we get the top five most popular aisles with fresh vegetables the most popular.
 
-Make a plot that shows the number of items ordered in each aisle. Order aisles sensibly, and organize your plot so others can read it.
+Below is the plot showing the number of items ordered in each aisle. 
 
 ```{r}
 
@@ -131,7 +165,9 @@ instacart %>%
 
 ```
 
-Making a table that shows the most popular item aisles “baking ingredients”, “dog food care”, and “packaged vegetables fruits”:
+As evident from the plot, the aisle containing fresh vegetables is where the most orders come from.
+
+Below is the table showing the most popular item in aisles “baking ingredients”, “dog food care”, and “packaged vegetables fruits”
 
 ```{r}
 instacart %>% 
@@ -141,10 +177,12 @@ instacart %>%
   summarise(number = n()) %>% 
   top_n(1, number) %>%
   arrange(desc(number))
+  knitr::kable()
+
   
 ```
 
-Make a table showing the mean hour of the day at which Pink Lady Apples and Coffee Ice Cream are ordered on each day of the week; format this table for human readers (i.e. produce a 2 x 7 table)
+Below is the table showing the mean hour of the day at which Pink Lady Apples and Coffee Ice Cream are ordered on each day of the week
 
 ```{r}
 
@@ -153,12 +191,14 @@ instacart %>%
   group_by(order_dow, product_name) %>% 
   summarise(mean_hour = mean(order_hour_of_day)) %>% 
   spread(key = product_name, value = mean_hour)
+  knitr::kable()
 
 instacart %>% 
   filter(product_name == "Coffee Ice Cream") %>% 
   group_by(order_dow, product_name) %>% 
   summarise(mean_hour = mean(order_hour_of_day)) %>% 
   spread(key = product_name, value = mean_hour)
+  knitr::kable()
 
 ```
 
@@ -168,21 +208,36 @@ Installing the dataset -
 ```{r}
 
 data("ny_noaa")
-install.packages("chron")
 
 ```
 
-Doing some data cleaning -
+Doing some data cleaning and creating separate variables for year, month, and day. Ensuring that the observations for temperature, precipitation, and snowfall are given in reasonable units (i.e. tenths of their units) by dividing by 10. For snowfall, calculating the most commonly observed values.
 
 ```{r}
 ny_noaa_df = ny_noaa %>% 
   mutate(month = months.Date(date),
          day = chron::days(date),
          year = chron::years(date),
-         tmax = as.numeric(tmax))
+         tmax = (as.numeric(tmax))/10,
+         tmin = (as.numeric(tmin))/10,
+         prcp = prcp/10)
+
 ```
 
-Make a two-panel plot showing the average max temperature in January and in July in each station across years. Is there any observable / interpretable structure? Any outliers?
+This dataset contains `r nrow(ny_noaa_df)` observations and `r ncol(ny_noaa_df)` variables. There are variables decribing precipitation (prcp), maximum and minimum temperature (tmax and tmin), snow fall(snow) and snow depth (snwd). We can see `r nrow(distinct(ny_noaa_df, id))` distinct stations recording all the various weather-related information from 1981 to 2010.
+
+```{r}
+
+ny_noaa_df %>% 
+  group_by(snow) %>% 
+  summarise(number = n()) %>% 
+  arrange(desc(number))
+
+```
+
+As we can observe for snowfall, the most common observed values are 0 and NA. This is an obvious observation as it does not snow on most days in a year. Also, there might be stations in geographic locations having no snow fall and hence with no recordings.
+
+Making a two-panel plot showing the average max temperature in January and in July in each station across years. 
 
 ```{r}
 
@@ -202,25 +257,26 @@ ny_noaa_df %>%
     discrete = TRUE) 
 
 ```
+It is evident that there are higher temperatures in July as compared to January, as expected. There are a a couple of outliers in some of the years.
 
-
-Make a two-panel plot showing (i) tmax vs tmin for the full dataset (note that a scatterplot may not be the best option); and (ii) make a plot showing the distribution of snowfall values greater than 0 and less than 100 separately by year.
+Making a two-panel plot showing (i) tmax vs tmin for the full dataset (note that a scatterplot may not be the best option); and (ii) making a plot showing the distribution of snowfall values greater than 0 and less than 100 separately by year.
 
 ```{r}
 
-my_scatter = ggplot(ny_noaa_df, aes(x = tmin, y = tmax, color = id)) +
+hex = ggplot(ny_noaa_df, aes(x = tmin, y = tmax, color = id)) +
   geom_hex(aes()) +
   theme(axis.text.x = element_text(angle = 85, hjust = 1, size = 8),
       legend.position = "none")
 
-my_data = ny_noaa_df %>% 
+my_boxplot = ny_noaa_df %>% 
   filter(snow > 0 & snow < 100) %>% 
   ggplot(aes(x = year, y = snow, fill = year)) +
   geom_boxplot(alpha = 0.3) +
   theme(axis.text.x = element_text(angle = 85, hjust = 1, size = 8),
         legend.position = "none")
 
-my_scatter / my_data
+hex / my_boxplot
 
 ```
 
+The hexagonal heat map shows the distribution of the pairs of tmax and tmin. From the box plot, we can observe that there is more variability in snowfall in the last ten years compared to first ten years. Additionally, there are more outliers in the last ten years compared to the first ten years.
