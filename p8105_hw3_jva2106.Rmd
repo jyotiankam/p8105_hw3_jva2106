@@ -23,6 +23,8 @@ library(tidyverse)
 
 library(p8105.datasets)
 
+library(patchwork)
+
 data("brfss_smart2010")
 brfss_smart_df = brfss_smart2010 %>% 
   janitor::clean_names() %>% 
@@ -32,10 +34,14 @@ brfss_smart_df = brfss_smart2010 %>%
  
 brfss_smart_df %>% 
   filter(year == 2002) %>% 
-  group_by(locationdesc) %>% 
-  summarise(n = n())
+  group_by(locationdesc) %>%
+  distinct(locationdesc) %>% 
+  summarise(n = n()) %>% 
+  filter(n == 7) %>% 
+  knitr::kable()
  
-brfss_smart_df %>% 
+brfss_smart_df %>%
+  distinct(locationabbr, locationdesc, year) %>% 
   group_by(locationabbr, year) %>% 
   summarise(n = n()) %>% 
   ggplot(aes(x = year, y = n, color = locationabbr)) +
@@ -45,7 +51,7 @@ brfss_smart_df %>%
     title = "Spaghetti plot",
     x = "Year",
     y = "Number of observed locations",
-    caption = "BRFSS data - 2010"
+    caption = "BRFSS data - Year 2010"
   )
 
 brfss_smart_df %>% 
@@ -93,6 +99,8 @@ instacart %>%
 instacart %>%
   group_by(aisle_id, aisle) %>% 
   summarise(number = n()) %>% 
+  ungroup() %>% 
+  top_n(5, number) %>% 
   arrange(desc(number))
 
 ```
@@ -108,9 +116,8 @@ instacart %>%
   mutate(aisle = tools::toTitleCase(aisle)) %>% 
   ggplot(aes(x = reorder(aisle, -number), y = number, fill = aisle)) +
   geom_col() +
-  theme(axis.text.x = element_text(angle = 85, hjust = 1)) +
-  theme(legend.position = "none") +
-  theme(text = element_text(size = 8)) +
+  theme(axis.text.x = element_text(angle = 85, hjust = 1, size = 8), 
+        legend.position = "none") +
   labs(
     title = "Frequency distribution of aisle orders",
     x = "Aisle",
@@ -128,7 +135,7 @@ instacart %>%
   group_by(aisle, product_name) %>% 
   summarise(number = n()) %>% 
   top_n(1, number) %>%
-  arrange(desc(number)) %>% View
+  arrange(desc(number))
   
 ```
 
@@ -137,9 +144,71 @@ Make a table showing the mean hour of the day at which Pink Lady Apples and Coff
 ```{r}
 
 instacart %>% 
-  filter(product_name == "Pink Lady Apples" | product_name == "Coffee Ice Cream") %>% 
+  filter(product_name == "Pink Lady Apples") %>% 
   group_by(order_dow, product_name) %>% 
-  summarise()
+  summarise(mean_hour = mean(order_hour_of_day))
+
+```
+
+Problem 3:
+Installing the dataset -
+
+```{r}
+
+data("ny_noaa")
+install.packages("chron")
+
+```
+
+Doing some data cleaning -
+
+```{r}
+ny_noaa_df = ny_noaa %>% 
+  mutate(month = months.Date(date),
+         day = chron::days(date),
+         year = chron::years(date),
+         tmax = as.numeric(tmax))
+```
+
+Make a two-panel plot showing the average max temperature in January and in July in each station across years. Is there any observable / interpretable structure? Any outliers?
+
+```{r}
+
+ny_noaa_df %>% 
+  group_by(id, year, month) %>% 
+  summarize(n = n(),
+            sum = sum(tmax, na.rm = TRUE),
+            mean = mean(tmax, na.rm = TRUE)) %>% 
+  filter(month %in% c("January", "July")) %>% 
+  ggplot(aes(x = year, y = mean, color = id)) +
+  facet_grid(~month) + 
+  geom_point() +
+  theme(axis.text.x = element_text(angle = 85, hjust = 1, size = 8),
+        legend.position = "none") +
+  viridis::scale_color_viridis(
+    name = "location", 
+    discrete = TRUE) 
+
+```
+
+
+Make a two-panel plot showing (i) tmax vs tmin for the full dataset (note that a scatterplot may not be the best option); and (ii) make a plot showing the distribution of snowfall values greater than 0 and less than 100 separately by year.
+
+```{r}
+
+my_scatter = ggplot(ny_noaa_df, aes(x = tmin, y = tmax, color = id)) +
+  geom_point(aes()) +
+  theme(axis.text.x = element_text(angle = 85, hjust = 1, size = 8),
+      legend.position = "none")
+
+my_data = ny_noaa_df %>% 
+  filter(snow > 0 & snow < 100) %>% 
+  ggplot(aes(x = year, y = snow, fill = year)) +
+  geom_boxplot(alpha = 0.3) +
+  theme(axis.text.x = element_text(angle = 85, hjust = 1, size = 8),
+        legend.position = "none")
+
+my_scatter / my_data
 
 ```
 
