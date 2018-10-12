@@ -122,7 +122,7 @@ data("instacart")
 
 Describing the dataset:
 
-This dataset contains `r nrow(instacart)` observations and `r ncol(instacart)` variables. Variable 'order_id' is a unique identifier of the orders that have been made. Also, we can observer that there are`r nrow(distinct(instacart, order_id))` distinct orders. Other variables like 'aisle', 'product_name', and 'department_name', have their own unique identifiers as well. Variables such as 'order_dow' tell us about the day of the week the order was made and 'order_hour_of_day' tell us the time the order was made. In addition, we can derive information from the `r nrow(distinct(instacard, user_id))` unique customers.
+This dataset contains `r nrow(instacart)` observations and `r ncol(instacart)` variables. Variable 'order_id' is a unique identifier of the orders that have been made. Also, we can observer that there are`r nrow(distinct(instacart, order_id))` distinct orders. Other variables like 'aisle', 'product_name', and 'department_name', have their own unique identifiers as well. Variables such as 'order_dow' tell us about the day of the week the order was made and 'order_hour_of_day' tell us the time the order was made. 
 
 Calculating the number of aisles, and also which aisles are the ones with the most items ordered from:
 
@@ -259,11 +259,19 @@ ny_noaa_df %>%
 ```
 It is evident that there are higher temperatures in July as compared to January, as expected. There are a a couple of outliers in some of the years.
 
-Making a two-panel plot showing (i) tmax vs tmin for the full dataset (note that a scatterplot may not be the best option); and (ii) making a plot showing the distribution of snowfall values greater than 0 and less than 100 separately by year.
+Making a two-panel plot showing (i) tmax vs tmin for the full dataset and (ii) making a plot showing the distribution of snowfall values greater than 0 and less than 100 separately by year.
 
 ```{r}
 
-hex = ggplot(ny_noaa_df, aes(x = tmin, y = tmax, color = id)) +
+ny_noaa_df %>% 
+  filter(month %in% c("Jan", "Jul")) %>% 
+  ggplot(aes(x = year, y = tmax, color = year)) +
+  facet_grid(~month) +
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 85, hjust = 1, size = 8),
+      legend.position = "none")
+
+hex = ggplot(ny_noaa_df, aes(x = tmin, y = tmax)) +
   geom_hex(aes()) +
   theme(axis.text.x = element_text(angle = 85, hjust = 1, size = 8),
       legend.position = "none")
