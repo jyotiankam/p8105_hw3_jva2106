@@ -127,34 +127,35 @@ This dataset contains `r nrow(instacart)` observations and `r ncol(instacart)` v
 Calculating the number of aisles, and also which aisles are the ones with the most items ordered from:
 
 ```{r}
-
 instacart %>% 
   distinct(aisle_id) %>% 
   count()
 
-instacart %>%
+instacart %>% 
   group_by(aisle_id, aisle) %>% 
   summarise(number = n()) %>% 
   ungroup() %>% 
   top_n(5, number) %>% 
-  arrange(desc(number))
+  arrange(desc(number)) %>% 
   knitr::kable()
 
 ```
-Here, we can see that there are `r pull(count(distinct(instacart, aisle_id)))` aisles. Also, we get the top five most popular aisles with fresh vegetables the most popular.
 
-Below is the plot showing the number of items ordered in each aisle. 
+Here, we can see that there are `r pull(count(distinct(instacart, aisle_id)))` aisles. Also, we get the top five most popular aisles with fresh vegetables the most popular.
+As evident from the plot, the aisle containing fresh vegetables is where the most orders come from.
+
+Below is the plot showing the number of items ordered in each aisle.
 
 ```{r}
 
-instacart %>%
+instacart %>% 
   group_by(aisle_id, aisle) %>% 
   summarise(number = n()) %>% 
-  arrange(desc(number)) %>%
+  arrange(desc(number)) %>% 
   mutate(aisle = tools::toTitleCase(aisle)) %>% 
   ggplot(aes(x = reorder(aisle, -number), y = number, fill = aisle)) +
   geom_col() +
-  theme(axis.text.x = element_text(angle = 85, hjust = 1, size = 8), 
+  theme(axis.text.x = element_text(angle = 85, hjust = 1, size = 8),
         legend.position = "none") +
   labs(
     title = "Frequency distribution of aisle orders",
@@ -165,45 +166,46 @@ instacart %>%
 
 ```
 
-As evident from the plot, the aisle containing fresh vegetables is where the most orders come from.
-
 Below is the table showing the most popular item in aisles “baking ingredients”, “dog food care”, and “packaged vegetables fruits”
 
 ```{r}
 instacart %>% 
-  select(product_name, aisle) %>% 
-  filter(aisle == "baking ingredients" | aisle == "dog food care" | aisle == "packaged vegetables fruits") %>%
+  select(aisle_id, aisle,product_id, product_name) %>% 
+  filter( aisle == "baking ingredients" | aisle == "dog food care" | aisle == "packaged vegetables fruits") %>% 
   group_by(aisle, product_name) %>% 
   summarise(number = n()) %>% 
-  top_n(1, number) %>%
-  arrange(desc(number))
+  top_n(1, number) %>% 
+  arrange(desc(number)) %>% 
   knitr::kable()
-
-  
 ```
+
+The table show the most popular/top items in each of those aisles.
+
 
 Below is the table showing the mean hour of the day at which Pink Lady Apples and Coffee Ice Cream are ordered on each day of the week
 
+
 ```{r}
-
 instacart %>% 
-  filter(product_name == "Pink Lady Apples") %>% 
+  filter(product_name == "Pink Lady Apples" ) %>% 
   group_by(order_dow, product_name) %>% 
   summarise(mean_hour = mean(order_hour_of_day)) %>% 
-  spread(key = product_name, value = mean_hour)
+  spread(key = product_name, value = mean_hour) %>% 
   knitr::kable()
 
 instacart %>% 
-  filter(product_name == "Coffee Ice Cream") %>% 
+  filter(product_name == "Coffee Ice Cream" ) %>% 
   group_by(order_dow, product_name) %>% 
   summarise(mean_hour = mean(order_hour_of_day)) %>% 
-  spread(key = product_name, value = mean_hour)
+  spread(key = product_name, value = mean_hour) %>% 
   knitr::kable()
-
 ```
+
 
 Problem 3:
 Installing the dataset -
+
+
 
 ```{r}
 
@@ -257,6 +259,7 @@ ny_noaa_df %>%
     discrete = TRUE) 
 
 ```
+
 It is evident that there are higher temperatures in July as compared to January, as expected. There are a a couple of outliers in some of the years.
 
 Making a two-panel plot showing (i) tmax vs tmin for the full dataset and (ii) making a plot showing the distribution of snowfall values greater than 0 and less than 100 separately by year.
@@ -264,7 +267,7 @@ Making a two-panel plot showing (i) tmax vs tmin for the full dataset and (ii) m
 ```{r}
 
 ny_noaa_df %>% 
-  filter(month %in% c("Jan", "Jul")) %>% 
+  filter(month %in% c("January", "July")) %>% 
   ggplot(aes(x = year, y = tmax, color = year)) +
   facet_grid(~month) +
   geom_boxplot() +
